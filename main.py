@@ -7,6 +7,11 @@ import tkinter as tk
 import json
 import random
 from PIL import Image, ImageTk
+import sys
+import platform
+
+if platform.system() == "Darwin":
+    from tkmacosx import Button as MacOsXButton
 
 
 class drawHalfFace():
@@ -71,6 +76,7 @@ class drawHalfFace():
 if __name__ == '__main__':
     c = drawHalfFace()
 
+
     # todo: 从检查点恢复数据
 
     def submit_word():
@@ -80,7 +86,11 @@ if __name__ == '__main__':
             label_text.configure(text=f"Remaining:{len(c.co)} pixels\nNo available pixels")
             c.savePicture()
             raise ValueError(f"Index out of range: length{len(c.co)}")
-        for input_text_value in input_text.get():
+        input_text_values = input_text.get()
+
+        print(input_text_values)
+
+        for input_text_value in input_text_values:
             print(input_text_value)
             if input_text_value in c.colorDictionary.keys():
                 color = c.colorDictionary[input_text_value]
@@ -92,15 +102,38 @@ if __name__ == '__main__':
         # label_img.image = photo
         # root.update()
 
+    def updateInputText(color):
+        input_text.configure(text=color)
 
     # ------------------- tkinter GUI config start -------------------
     root = tk.Tk()
     root.title("Demo: pictureFullFill")
     photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
-    colorChoose = tk.Listbox(root)
-    colorChoose.grid(row=0, column=0, rowspan=2, sticky=tk.NSEW)
-    for item in c.colorRanging:
-        colorChoose.insert(tk.END, item)
+
+    colorSelector = tk.Frame(root)
+    colorSelector.grid(row=0, column=0, sticky=tk.NSEW)
+    colorBoard = []
+    for i in range(len(c.colorDictionary)):
+        sub_key = list(c.colorDictionary.keys())[i]
+        sub_text = tk.Text(colorSelector, height=2, width=20)
+        sub_text.insert("insert", sub_key)
+        sub_text.grid(row=i, column=0)
+        colorSeries = []
+        r_limite, g_limite, b_limite = c.colorDictionary[sub_key]
+        rL = [i for i in range(r_limite, 255, int((254 - r_limite) // 9))]
+        gL = [i for i in range(g_limite, 255, int((254 - g_limite) // 9))]
+        bL = [i for i in range(b_limite, 255, int((254 - b_limite) // 9))]
+        for f in range(min(len(rL), len(gL), len(bL))-1):
+            r, g, b = rL[f], gL[f], bL[f]
+            sub_color = "#%02x%02x%02x" % (r, g, b)
+            if platform.system() == "Darwin":
+                sub_button = MacOsXButton(colorSelector, text="",command=lambda color:updateInputText(color), bg=sub_color, fg=sub_color, highlightbackground=sub_color,width=50)
+            else:
+                sub_button = tk.Button(colorSelector, text="",command=lambda color:updateInputText(color), bg=sub_color, fg=sub_color, highlightbackground=sub_color,width=50)
+            sub_button.grid(row=i, column=9 - f)
+            colorSeries.append(sub_button)
+        colorBoard.append(colorSeries)
+
     label_img = tk.Label(root, image=photo)
     label_img.grid(row=0, column=1, columnspan=5)
     label_text = tk.Label(root, text="Place text")
