@@ -17,14 +17,11 @@ class drawHalfFace():
     def __init__(self):
         self.i = 32
         # read picture
-        self.pic = plt.imread("img/base.jpg")
+        self.pic = np.array(Image.open("img/base.jpg"))
         with open("colorDictionary.json", "r") as f:
             self.colorDictionary = json.loads(f.read())
         with open("basicColorDictionary.json", "r") as f:
             self.basicColorDictionary = json.loads(f.read())
-        # test argument
-        self.pic[0, 0, :] = [255, 255, 255]
-
         self.canDraw = np.sum(255 == self.pic, axis=2) == 3
         self.shape = self.pic.shape
         self.co = []
@@ -34,7 +31,7 @@ class drawHalfFace():
                               col:(col + self.i if col + self.i < self.shape[1] else self.shape[1])]
                 if True in boundedArea:
                     self.co.append((row, col))
-        # Draw Grids
+        # todo: Draw Grids
 
     def randomColorFill(self):
         target = random.choice(self.co)
@@ -60,11 +57,8 @@ class drawHalfFace():
                 if [255, 255, 255] in self.pic[target[0] + row, target[1] + col, :]:
                     self.pic[target[0] + row, target[1] + col, :] = colorCode
 
-    def displayPicture(self):
-        plt.imshow(self.pic)
-
     def savePicture(self):
-        plt.imsave("output.jpg", self.pic)
+        Image.fromarray(self.pic)
 
     def saveCheckPoint(self):
         path = "npy/"
