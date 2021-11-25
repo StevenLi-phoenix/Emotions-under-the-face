@@ -7,11 +7,10 @@ import tkinter as tk
 import json
 import random
 from PIL import Image, ImageTk
-import sys
 import platform
 
 if platform.system() == "Darwin":
-    from tkmacosx import Button as MacOsXButton
+    from tkmacosx import Button as MacButton
 
 
 class drawHalfFace():
@@ -21,8 +20,8 @@ class drawHalfFace():
         self.pic = plt.imread("img/base.jpg")
         with open("colorDictionary.json", "r") as f:
             self.colorDictionary = json.loads(f.read())
-        with open("colorRanging.json", "r") as f:
-            self.colorRanging = np.array(json.loads(f.read()))
+        with open("basicColorDictionary.json", "r") as f:
+            self.basicColorDictionary = json.loads(f.read())
         # test argument
         self.pic[0, 0, :] = [255, 255, 255]
 
@@ -52,6 +51,7 @@ class drawHalfFace():
         :param color: [r, g, b] list
         :return: None
         """
+        print(color)
         target = random.choice(self.co)
         self.co.remove(target)
         colorCode = color
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     # todo: 从检查点恢复数据
 
-    def submit_word():
+    def submit_word(Event = None):
         global photo
         label_text.configure(text=f"Remaining:{len(c.co)} pixels")
         if len(c.co) == 0:
@@ -87,23 +87,27 @@ if __name__ == '__main__':
             c.savePicture()
             raise ValueError(f"Index out of range: length{len(c.co)}")
         input_text_values = input_text.get()
-
         print(input_text_values)
-
-        for input_text_value in input_text_values:
-            print(input_text_value)
-            if input_text_value in c.colorDictionary.keys():
-                color = c.colorDictionary[input_text_value]
-                c.targetColorFill(color)
+        if input_text_values != "":
+            if input_text_values[0]=="#":
+                c.targetColorFill([int(input_text_values[1:3],16),int(input_text_values[3:5],16),int(input_text_values[5:7],16)])
             else:
-                c.randomColorFill()
+                for input_text_value in input_text_values:
+                    if input_text_value in c.colorDictionary.keys():
+                        color = c.colorDictionary[input_text_value]
+                        c.targetColorFill(color)
+                    else:
+                        c.randomColorFill()
+        else:
+            c.randomColorFill()
         photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
         label_img.configure(image=photo)
         # label_img.image = photo
         # root.update()
 
     def updateInputText(color):
-        input_text.configure(text=color)
+        input_text.delete(0,"end")
+        input_text.insert(0, color)
 
     # ------------------- tkinter GUI config start -------------------
     root = tk.Tk()
@@ -113,13 +117,15 @@ if __name__ == '__main__':
     colorSelector = tk.Frame(root)
     colorSelector.grid(row=0, column=0, sticky=tk.NSEW)
     colorBoard = []
-    for i in range(len(c.colorDictionary)):
-        sub_key = list(c.colorDictionary.keys())[i]
+    colorStorages = []
+    colorDictionaryKeys = list(c.colorDictionary.keys())
+    for i in range(len(c.basicColorDictionary)):
+        sub_key = list(c.basicColorDictionary.keys())[i]
         sub_text = tk.Text(colorSelector, height=2, width=20)
         sub_text.insert("insert", sub_key)
         sub_text.grid(row=i, column=0)
         colorSeries = []
-        r_limite, g_limite, b_limite = c.colorDictionary[sub_key]
+        r_limite, g_limite, b_limite = c.basicColorDictionary[sub_key]
         rL = [i for i in range(r_limite, 255, int((254 - r_limite) // 9))]
         gL = [i for i in range(g_limite, 255, int((254 - g_limite) // 9))]
         bL = [i for i in range(b_limite, 255, int((254 - b_limite) // 9))]
@@ -127,10 +133,11 @@ if __name__ == '__main__':
             r, g, b = rL[f], gL[f], bL[f]
             sub_color = "#%02x%02x%02x" % (r, g, b)
             if platform.system() == "Darwin":
-                sub_button = MacOsXButton(colorSelector, text="",command=lambda color:updateInputText(color), bg=sub_color, fg=sub_color, highlightbackground=sub_color,width=50)
+                sub_button = MacButton(colorSelector, text=f"{c.colorDictionary[str((r,g,b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}", command=lambda ccommand=sub_color:updateInputText(ccommand), bg=sub_color, fg="black", highlightbackground=sub_color,width=50)
             else:
-                sub_button = tk.Button(colorSelector, text="",command=lambda color:updateInputText(color), bg=sub_color, fg=sub_color, highlightbackground=sub_color,width=50)
+                sub_button = tk.Button(colorSelector, text=f"{c.colorDictionary[str((r,g,b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}", command=lambda ccommand=sub_color:updateInputText(ccommand), bg=sub_color, fg="black", highlightbackground=sub_color,width=50)
             sub_button.grid(row=i, column=9 - f)
+            colorStorages.append(str((r,g,b)))
             colorSeries.append(sub_button)
         colorBoard.append(colorSeries)
 
@@ -142,6 +149,9 @@ if __name__ == '__main__':
     input_text.grid(row=1, column=1, columnspan=4, sticky=tk.NSEW)
     button_submit = tk.Button(root, text="submit", command=submit_word)
     button_submit.grid(row=1, column=5, sticky=tk.NSEW)
+    root.bind('<Return>', submit_word)
+    with open("colorStorages.json", "w") as f:
+        f.write(json.dumps(colorStorages))
     # ------------------- tkinter GUI config end   -------------------
     # mainloop update
     root.mainloop()

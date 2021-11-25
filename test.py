@@ -1,16 +1,16 @@
 import json
 
 colorDictionary = {
-    "焦虑":(101,73,134),
-    "力量":(206,25,0),
-    "恶心":(51,51,0),
-    "青春":(195,243,181),
-    "支持":(216,255,21),
-    "悲痛":(4,0,148),
-    "无感":(148,148,148),
-    "不安":(252,229,54),
+    str((101,73,134)):"焦虑",
+    str((206,25,0)):"力量",
+    str((51,51,0)):"恶心",
+    str((195,243,181)):"青春",
+    str((216,255,21)):"支持",
+    str((4,0,148)):"悲痛",
+    str((148,148,148)):"无感",
+    str((252,229,54)):"不安",
+    str((227,224,227)):"沙雕",
 }
-
 basicColorDictionary = {
     "Red":[165, 8, 22],
     "Pink":[168, 45, 38],
@@ -31,10 +31,20 @@ basicColorDictionary = {
     "Blue Grey":[41, 50, 55],
     "Brown":[59, 40, 35],
 }
-status = False
-if status:
-    with open("colorDictionary.json", "w") as f:
-        f.write(json.dumps(colorDictionary))
-else:
-    with open("colorDictionary.json", "w") as f:
-        f.write(json.dumps(basicColorDictionary))
+textColorDictionary = {
+    "焦虑":(101,73,134),
+    "力量":(206,25,0),
+    "恶心":(51,51,0),
+    "青春":(195,243,181),
+    "支持":(216,255,21),
+    "悲痛":(4,0,148),
+    "无感":(148,148,148),
+    "不安":(252,229,54),
+}
+
+with open("colorDictionary.json", "w") as f:
+    f.write(json.dumps(colorDictionary))
+with open("basicColorDictionary.json", "w") as f:
+    f.write(json.dumps(basicColorDictionary))
+with open("textColorDictionary.json", "w") as f:
+    f.write(json.dumps(textColorDictionary))
