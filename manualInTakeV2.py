@@ -3,6 +3,7 @@ import tkinter
 import tkinter.filedialog
 from tkinter import *
 
+# default data
 colorStorages = ["(165, 8, 22)", "(174, 35, 47)", "(183, 62, 72)", "(192, 89, 97)", "(201, 116, 122)",
                  "(210, 143, 147)", "(219, 170, 172)", "(228, 197, 197)", "(237, 224, 222)", "(168, 45, 38)",
                  "(177, 68, 62)", "(186, 91, 86)", "(195, 114, 110)", "(204, 137, 134)", "(213, 160, 158)",
@@ -37,20 +38,14 @@ colorStorages = ["(165, 8, 22)", "(174, 35, 47)", "(183, 62, 72)", "(192, 89, 97
                  "(101, 86, 83)", "(122, 109, 107)", "(143, 132, 131)", "(164, 155, 155)", "(185, 178, 179)",
                  "(206, 201, 203)", "(227, 224, 227)"]
 colorDictionary = {}
-# with open("colorStorages.json", "r") as f:
-#     colorStorages = json.loads(f.read())
-# with open("colorDictionary.json", "r") as f:
-#     colorDictionary = json.loads(f.read())
 
 root = tkinter.Tk()
 root.title("Demo: colorAliasConfig")
+root.resizable(0, 0)
 
-
-# width,height = 800,450
-# root.geometry("%dx%d+30+30"%(width,height))
-# root.resizable(0,0)
 
 def updateSelection(event):
+    global colorDictionaryKeys
     colorDictionaryKeys = list(colorDictionary.keys())
     i = LB.curselection()
     updateView(event)
@@ -76,6 +71,18 @@ def setColor():
         LB2.update()
 
 
+def updateAll():
+    global colorDictionaryKeys
+    colorDictionaryKeys = list(colorDictionary.keys())
+    for i in range(len(colorStorages)):
+        r, g, b = (int(j) for j in colorStorages[i].replace("(", "").replace(")", "").split(","))
+        LB.delete(i)
+        LB2.delete(i)
+        LB.insert(i, f"{colorStorages[i]}")
+        LB2.insert(i, f"{colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else None}")
+    root.update()
+
+
 def saveDictionary(path="colorDictionary.json"):
     with open(path, "w") as f:
         f.write(json.dumps(colorDictionary))
@@ -87,6 +94,7 @@ def FileOpen():
                                            filetypes=[('Json', '*.json'), ('All files', '*')])
     with open(r, "r") as f:
         colorDictionary = json.loads(f.read())
+    updateAll()
 
 
 def FileSave():
@@ -98,6 +106,9 @@ def FileSave():
 
 colorDictionaryKeys = list(colorDictionary.keys())
 changeList = []
+i = 0
+r, g, b = 255, 255, 255
+
 LB = Listbox(root)
 LB2 = Listbox(root)
 LB.grid(row=0, column=0, sticky=NSEW)
@@ -110,18 +121,16 @@ for i in range(len(colorStorages)):
     r, g, b = (int(j) for j in colorStorages[i].replace("(", "").replace(")", "").split(","))
     LB.insert("end", f"{colorStorages[i]}")
     LB2.insert("end", f"{colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else None}")
-i = 0
-r, g, b = 255, 255, 255
 Label = tkinter.Label(root, text="None", bg="white", width=15)
 Label.grid(row=0, column=2, sticky=NSEW)
 InputText = tkinter.Entry(root)
 InputText.grid(row=0, column=3, sticky=NSEW)
 InputButtom = tkinter.Button(root, text="Submit", command=setColor)
 InputButtom.grid(row=0, column=4, sticky=NSEW)
-SaveButtom = Button(root, text="Save", command=saveDictionary)
-SaveButtom.grid(row=0, column=5, sticky=NSEW)
+# SaveButtom = Button(root, text="Save", command=saveDictionary)
+# SaveButtom.grid(row=0, column=5, sticky=NSEW)
 LoadButtom = Button(root, text="Upload", command=FileOpen)
-LoadButtom.grid(row=0, column=6, sticky=NSEW)
+LoadButtom.grid(row=0, column=5, sticky=NSEW)
 SaveButtom2 = Button(root, text="Download", command=FileSave)
-SaveButtom2.grid(row=0, column=7, sticky=NSEW)
+SaveButtom2.grid(row=0, column=6, sticky=NSEW)
 tkinter.mainloop()

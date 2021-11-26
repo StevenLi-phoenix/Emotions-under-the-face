@@ -1,7 +1,6 @@
 # author: StevenLi 李树雨
 # time: 2021.11.25
 
-import matplotlib.pyplot as plt
 import numpy as np
 import tkinter as tk
 import json
@@ -58,7 +57,7 @@ class drawHalfFace():
                     self.pic[target[0] + row, target[1] + col, :] = colorCode
 
     def savePicture(self):
-        Image.fromarray(self.pic)
+        Image.fromarray(self.pic).save("img/output.png", format="png")
 
     def saveCheckPoint(self):
         path = "npy/"
@@ -144,8 +143,6 @@ if __name__ == '__main__':
     button_submit = tk.Button(root, text="submit", command=submit_word)
     button_submit.grid(row=1, column=5, sticky=tk.NSEW)
     root.bind('<Return>', submit_word)
-    with open("colorStorages.json", "w") as f:
-        f.write(json.dumps(colorStorages))
     # ------------------- tkinter GUI config end   -------------------
     # mainloop update
     root.mainloop()
