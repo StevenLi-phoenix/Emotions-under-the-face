@@ -19,3 +19,5 @@ The subroutine is the associator of color and text, which associates the color w
 Use the Pyinstaller library to generate the binary executable ColorSelect. The generation of this binary file in MacOS may cause problems. In addition, this binary file has not been signed and verified, please check the hash value before using it.
 
 <b>I am not responsible for any responsibilities that may arise from the use of this file</b>
+
+![61930743_p0](https://user-images.githubusercontent.com/75846119/143512336-0f232a88-47a0-4c9e-9ed5-8d074875ba2c.png)
