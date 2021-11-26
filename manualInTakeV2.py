@@ -1,5 +1,4 @@
 import json
-import tkinter
 import tkinter.filedialog
 from tkinter import *
 
@@ -39,7 +38,7 @@ colorStorages = ["(165, 8, 22)", "(174, 35, 47)", "(183, 62, 72)", "(192, 89, 97
                  "(206, 201, 203)", "(227, 224, 227)"]
 colorDictionary = {}
 
-root = tkinter.Tk()
+root = Tk()
 root.title("Demo: colorAliasConfig")
 root.resizable(0, 0)
 
@@ -121,11 +120,11 @@ for i in range(len(colorStorages)):
     r, g, b = (int(j) for j in colorStorages[i].replace("(", "").replace(")", "").split(","))
     LB.insert("end", f"{colorStorages[i]}")
     LB2.insert("end", f"{colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else None}")
-Label = tkinter.Label(root, text="None", bg="white", width=15)
+Label = Label(root, text="None", bg="white", width=15)
 Label.grid(row=0, column=2, sticky=NSEW)
-InputText = tkinter.Entry(root)
+InputText = Entry(root)
 InputText.grid(row=0, column=3, sticky=NSEW)
-InputButtom = tkinter.Button(root, text="Submit", command=setColor)
+InputButtom = Button(root, text="Submit", command=setColor)
 InputButtom.grid(row=0, column=4, sticky=NSEW)
 # SaveButtom = Button(root, text="Save", command=saveDictionary)
 # SaveButtom.grid(row=0, column=5, sticky=NSEW)
@@ -133,4 +132,5 @@ LoadButtom = Button(root, text="Upload", command=FileOpen)
 LoadButtom.grid(row=0, column=5, sticky=NSEW)
 SaveButtom2 = Button(root, text="Download", command=FileSave)
 SaveButtom2.grid(row=0, column=6, sticky=NSEW)
-tkinter.mainloop()
+root.update()
+mainloop()
