@@ -21,6 +21,7 @@ class drawHalfFace():
             self.colorDictionary = json.loads(f.read())
         with open("basicColorDictionary.json", "r") as f:
             self.basicColorDictionary = json.loads(f.read())
+        self.textColorDictionary = dict(zip(self.colorDictionary.values(), self.colorDictionary.keys()))
         self.canDraw = np.sum(255 == self.pic, axis=2) == 3
         self.shape = self.pic.shape
         self.co = []
@@ -84,19 +85,17 @@ if __name__ == '__main__':
         if input_text_values != "":
             if input_text_values[0]=="#":
                 c.targetColorFill([int(input_text_values[1:3],16),int(input_text_values[3:5],16),int(input_text_values[5:7],16)])
+            elif input_text_values in c.textColorDictionary.keys():
+                print([int(i) for i in c.textColorDictionary[input_text_values][1:-1].split(",")])
+                c.targetColorFill([int(i) for i in c.textColorDictionary[input_text_values][1:-1].split(",")])
             else:
-                for input_text_value in input_text_values:
-                    if input_text_value in c.colorDictionary.keys():
-                        color = c.colorDictionary[input_text_value]
-                        c.targetColorFill(color)
-                    else:
-                        c.randomColorFill()
+                c.randomColorFill()
         else:
             c.randomColorFill()
         photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
         label_img.configure(image=photo)
         # label_img.image = photo
-        # root.update()
+        root.update()
 
     def updateInputText(color):
         input_text.delete(0,"end")
@@ -118,7 +117,7 @@ if __name__ == '__main__':
         sub_text.insert("insert", sub_key)
         sub_text.grid(row=i, column=0)
         colorSeries = []
-        r_limite, g_limite, b_limite = c.basicColorDictionary[sub_key]
+        r_limite, g_limite, b_limite = c.basicColorDictionary[str(sub_key)]
         rL = [i for i in range(r_limite, 255, int((254 - r_limite) // 9))]
         gL = [i for i in range(g_limite, 255, int((254 - g_limite) // 9))]
         bL = [i for i in range(b_limite, 255, int((254 - b_limite) // 9))]
