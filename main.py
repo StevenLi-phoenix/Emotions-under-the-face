@@ -1,12 +1,14 @@
 # author: StevenLi 李树雨
 # time: 2021.11.25
 
-import numpy as np
-import tkinter as tk
 import json
-import random
-from PIL import Image, ImageTk
 import platform
+import random
+import time
+import tkinter as tk
+import tkinter.messagebox as msg
+import numpy as np
+from PIL import Image, ImageTk
 
 if platform.system() == "Darwin":
     from tkmacosx import Button as MacButton
@@ -14,9 +16,11 @@ if platform.system() == "Darwin":
 
 class drawHalfFace():
     def __init__(self):
-        self.i = 32
+        # matrix size
+        self.i = 64
         # read picture
-        self.pic = np.array(Image.open("img/base.jpg"))
+        self.npyPath = "npy/"
+        self.pic = np.array(Image.open("img/WechatIMG84.jpeg"))
         with open("colorDictionary.json", "r") as f:
             self.colorDictionary = json.loads(f.read())
         with open("basicColorDictionary.json", "r") as f:
@@ -34,13 +38,8 @@ class drawHalfFace():
         # todo: Draw Grids
 
     def randomColorFill(self):
-        target = random.choice(self.co)
-        self.co.remove(target)
         colorCode = [random.randint(0, 255) for i in range(3)]
-        for row in range(self.i):
-            for col in range(self.i):
-                if [255, 255, 255] in self.pic[target[0] + row, target[1] + col, :]:
-                    self.pic[target[0] + row, target[1] + col, :] = colorCode
+        self.targetColorFill(colorCode)
 
     def targetColorFill(self, color):
         """
@@ -48,32 +47,73 @@ class drawHalfFace():
         :param color: [r, g, b] list
         :return: None
         """
-        print(color)
         target = random.choice(self.co)
         self.co.remove(target)
+        print(color, "@", target)
         colorCode = color
-        for row in range(self.i):
-            for col in range(self.i):
-                if [255, 255, 255] in self.pic[target[0] + row, target[1] + col, :]:
-                    self.pic[target[0] + row, target[1] + col, :] = colorCode
+        for row in range(self.i if self.i < self.shape[0] else self.shape[0]):
+            for col in range(self.i if self.i < self.shape[1] else self.shape[1]):
+                if [255, 255, 255] in self.pic[target[0] + row if target[0] + row < self.shape[0] else self.shape[0],
+                                      target[1] + col if target[1] + col < self.shape[1] - 1 else self.shape[1] - 1, :]:
+                    self.pic[target[0] + row if target[0] + row < self.shape[0] else self.shape[0],
+                    target[1] + col if target[1] + col < self.shape[1] - 1 else self.shape[1] - 1, :] = colorCode
+                    print(f"\rProgressing row: {row}\tcol:{col}\tto:{colorCode}", end="")
+        print(f"\rProgressing Done")
+
+    def fillAllBlack(self, colorCode=None):
+        if colorCode is None:
+            colorCode = [0, 0, 0]
+        for target in self.co:
+            for row in range(self.i):
+                for col in range(self.i):
+                    if [255, 255, 255] in self.pic[target[0] + row, target[1] + col, :]:
+                        self.pic[target[0] + row, target[1] + col, :] = colorCode
+        self.co.clear()
 
     def savePicture(self):
         Image.fromarray(self.pic).save("img/output.png", format="png")
 
     def saveCheckPoint(self):
-        path = "npy/"
-        np.save(f"{path}self.pic.npy", self.pic)
-        np.save(f"{path}self.co.npy", self.co)
-        np.save(f"{path}self.canDraw.npy", self.canDraw)
+        with open(f"{self.npyPath}self.co.list", "w") as f:
+            f.write(json.dumps(self.co))
+        np.save(f"{self.npyPath}self.pic.npy", self.pic)
+        np.save(f"{self.npyPath}self.canDraw.npy", self.canDraw)
+
+    def loadCheckPoint(self):
+        with open(f"{self.npyPath}self.co.list", "r") as f:
+            self.co = json.loads(f.read())
+        self.pic = np.load(f"{self.npyPath}self.pic.npy")
+        self.canDraw = np.load(f"{self.npyPath}self.canDraw.npy")
+
+
+class timer():
+    def __init__(self):
+        self.time_recored = 0
+        self.timeList = []
+        self.accTime = time.time()
+
+    def start(self):
+        self.time_recored = time.time()
+        return self
+
+    def recored(self, name=None):
+        self.timeList.append(
+            f"ABS:{'{:.10f}'.format(time.time() - self.time_recored)},\t ACC:{'{:.10f}'.format(time.time() - self.accTime, 10)},\t {name}")
+        self.accTime = time.time()
+
+    def __str__(self):
+        return "\n".join(self.timeList)
+
+    def stop(self):
+        print(str(self))
+        return str(self)
 
 
 if __name__ == '__main__':
     c = drawHalfFace()
 
 
-    # todo: 从检查点恢复数据
-
-    def submit_word(Event = None):
+    def submit_word(_=None):
         global photo
         label_text.configure(text=f"Remaining:{len(c.co)} pixels")
         if len(c.co) == 0:
@@ -83,34 +123,54 @@ if __name__ == '__main__':
         input_text_values = input_text.get()
         print(input_text_values)
         if input_text_values != "":
-            if input_text_values[0]=="#":
-                c.targetColorFill([int(input_text_values[1:3],16),int(input_text_values[3:5],16),int(input_text_values[5:7],16)])
+            if input_text_values[0] == "#":
+                c.targetColorFill(
+                    [int(input_text_values[1:3], 16), int(input_text_values[3:5], 16), int(input_text_values[5:7], 16)])
+            elif "test" in input_text_values:
+                c.fillAllBlack()
+            elif "load" in input_text_values:
+                c.loadCheckPoint()
+            elif "help" in input_text_values or "h" == input_text_values:
+                msg.showinfo("HELP",
+                             "test: See all available pixels.\nload: load last auto checkpoint\nSelect colors on the left columns and click submit or enter to fill colors on her face.")
+            elif "copyright" in input_text_values or "author" in input_text_values:
+                msg.showinfo("COPYRIGHTS", "All rights reserved, Author: 李树雨StevenLi")
             elif input_text_values in c.textColorDictionary.keys():
                 print([int(i) for i in c.textColorDictionary[input_text_values][1:-1].split(",")])
                 c.targetColorFill([int(i) for i in c.textColorDictionary[input_text_values][1:-1].split(",")])
+
             else:
                 c.randomColorFill()
         else:
             c.randomColorFill()
+        c.saveCheckPoint()
         photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
         label_img.configure(image=photo)
-        # label_img.image = photo
-        root.update()
+        label_img.update()
+
 
     def updateInputText(color):
-        input_text.delete(0,"end")
+        input_text.delete(0, "end")
         input_text.insert(0, color)
 
-    # ------------------- tkinter GUI config start -------------------
-    root = tk.Tk()
-    root.title("Demo: pictureFullFill")
-    photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
 
+    def updatePciture():
+        global photo
+        while True:
+            photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
+
+
+    # ------------------- tkinter GUI config start -------------------
+    # msg.showinfo("Info", "Author: StevenLi李树雨\nCopyrights all rights reserve.")
+    root = tk.Tk()
+    root.title("Demo: pictureFullFill\t\tAuthor: StevenLi李树雨 - all rights reserve.")
+    photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
     colorSelector = tk.Frame(root)
     colorSelector.grid(row=0, column=0, sticky=tk.NSEW)
     colorBoard = []
     colorStorages = []
     colorDictionaryKeys = list(c.colorDictionary.keys())
+
     for i in range(len(c.basicColorDictionary)):
         sub_key = list(c.basicColorDictionary.keys())[i]
         sub_text = tk.Text(colorSelector, height=2, width=20)
@@ -121,15 +181,21 @@ if __name__ == '__main__':
         rL = [i for i in range(r_limite, 255, int((254 - r_limite) // 9))]
         gL = [i for i in range(g_limite, 255, int((254 - g_limite) // 9))]
         bL = [i for i in range(b_limite, 255, int((254 - b_limite) // 9))]
-        for f in range(min(len(rL), len(gL), len(bL))-1):
+        for f in range(min(len(rL), len(gL), len(bL)) - 1):
             r, g, b = rL[f], gL[f], bL[f]
             sub_color = "#%02x%02x%02x" % (r, g, b)
             if platform.system() == "Darwin":
-                sub_button = MacButton(colorSelector, text=f"{c.colorDictionary[str((r,g,b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}", command=lambda ccommand=sub_color:updateInputText(ccommand), bg=sub_color, fg="black", highlightbackground=sub_color,width=50)
+                sub_button = MacButton(colorSelector,
+                                       text=f"{c.colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}",
+                                       command=lambda ccommand=sub_color: updateInputText(ccommand), bg=sub_color,
+                                       fg="black", highlightbackground=sub_color, width=50)
             else:
-                sub_button = tk.Button(colorSelector, text=f"{c.colorDictionary[str((r,g,b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}", command=lambda ccommand=sub_color:updateInputText(ccommand), bg=sub_color, fg="black", highlightbackground=sub_color,width=50)
+                sub_button = tk.Button(colorSelector,
+                                       text=f"{c.colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}",
+                                       command=lambda ccommand=sub_color: updateInputText(ccommand), bg=sub_color,
+                                       fg="black", highlightbackground=sub_color, width=5)
             sub_button.grid(row=i, column=9 - f)
-            colorStorages.append(str((r,g,b)))
+            colorStorages.append(str((r, g, b)))
             colorSeries.append(sub_button)
         colorBoard.append(colorSeries)
 
