@@ -31,6 +31,8 @@ class drawHalfFace():
         self.npyPath = "npy/" # saved & load npy files path
         self.colorDictionaryPath = "colorDictionary.json" # load "colorDictionary.json" path
         self.basicColorDictionaryPath = "basicColorDictionary.json" # load "basicColorDictionary.json" path
+        self.drawGrid = False # whether draw grids
+        gridColor = (0,0,0) # the color of grid
 
         # read picture
         self.pic = np.array(Image.open(self.picturePath))
@@ -59,6 +61,14 @@ class drawHalfFace():
                               col:(col + self.i if col + self.i < self.shape[1] else self.shape[1])]
                 if True in boundedArea:
                     self.co.append((row, col))
+                if self.drawGrid:
+                    for indexR in range(0, self.shape[0]):
+                        if self.canDraw[indexR, col]:
+                            self.pic[indexR, col] = gridColor
+            if self.drawGrid:
+                for indexC in range(0, self.shape[0]):
+                    if self.canDraw[row, indexC]:
+                        self.pic[row, indexC] = gridColor
         # todo: Draw Grids
 
     def randomColorFill(self):
