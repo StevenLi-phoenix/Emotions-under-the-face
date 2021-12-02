@@ -1,5 +1,5 @@
 # author: StevenLi 李树雨
-# time: 2021.11.25
+# time: 2021.12.2
 
 import json
 import platform
@@ -7,24 +7,48 @@ import random
 import time
 import tkinter as tk
 import tkinter.messagebox as msg
+from os.path import exists
+from os import mkdir
+
+
 import numpy as np
 from PIL import Image, ImageTk
 
-if platform.system() == "Darwin":
+if platform.system() == "Darwin": # tkinter.Button has display error on mac so instead import another remade tkmacosx for replace
     from tkmacosx import Button as MacButton
 
 
 class drawHalfFace():
     def __init__(self):
-        # matrix size
-        self.i = 64
+        # control
+        self.i = 32 # matrix size
+        loadColorDic = True # load "colorDictionary.json" ?
+        self.colorDictDefaultValue = "default" # "default" or any str
+        self.printLog = False # whether print logs
+        self.pictureResizeWidth = 800 # resized picture height (mainly caused by picture too big or too small
+        self.pictureResizeHeight = 600 # resized picture weight (mainly caused by picture too big or too small
+        self.picturePath = "img/base.jpg" # picture path
+        self.npyPath = "npy/" # saved & load npy files path
+        self.colorDictionaryPath = "colorDictionary.json" # load "colorDictionary.json" path
+        self.basicColorDictionaryPath = "basicColorDictionary.json" # load "basicColorDictionary.json" path
+
         # read picture
-        self.npyPath = "npy/"
-        self.pic = np.array(Image.open("img/WechatIMG84.jpeg"))
-        with open("colorDictionary.json", "r") as f:
-            self.colorDictionary = json.loads(f.read())
-        with open("basicColorDictionary.json", "r") as f:
-            self.basicColorDictionary = json.loads(f.read())
+        self.pic = np.array(Image.open(self.picturePath))
+        if loadColorDic:
+            try:
+                with open(self.colorDictionaryPath, "r") as f:
+                    self.colorDictionary = json.loads(f.read())
+            except Exception as e:
+                if self.printLog: print(f"Read file: {self.colorDictionaryPath} failed\n{e}")
+                self.colorDictionary = {}
+        else:
+            self.colorDictionary = {}
+        try:
+            with open(self.basicColorDictionaryPath, "r") as f:
+                self.basicColorDictionary = json.loads(f.read())
+        except Exception as e:
+            if self.printLog: print(f"Read file: {self.basicColorDictionaryPath} failed\n{e}")
+            self.colorDictionary = {}
         self.textColorDictionary = dict(zip(self.colorDictionary.values(), self.colorDictionary.keys()))
         self.canDraw = np.sum(255 == self.pic, axis=2) == 3
         self.shape = self.pic.shape
@@ -49,7 +73,7 @@ class drawHalfFace():
         """
         target = random.choice(self.co)
         self.co.remove(target)
-        print(color, "@", target)
+        if self.printLog:print(color, "@", target)
         colorCode = color
         for row in range(self.i if self.i < self.shape[0] else self.shape[0]):
             for col in range(self.i if self.i < self.shape[1] else self.shape[1]):
@@ -57,10 +81,11 @@ class drawHalfFace():
                                       target[1] + col if target[1] + col < self.shape[1] - 1 else self.shape[1] - 1, :]:
                     self.pic[target[0] + row if target[0] + row < self.shape[0] else self.shape[0],
                     target[1] + col if target[1] + col < self.shape[1] - 1 else self.shape[1] - 1, :] = colorCode
-                    print(f"\rProgressing row: {row}\tcol:{col}\tto:{colorCode}", end="")
-        print(f"\rProgressing Done")
+                    if self.printLog:print(f"\rProgressing row: {row}\tcol:{col}\tto:{colorCode}", end="")
+        if self.printLog:print(f"\rProgressing Done")
 
     def fillAllBlack(self, colorCode=None):
+        if self.printLog: print("Test method start: printing all black")
         if colorCode is None:
             colorCode = [0, 0, 0]
         for target in self.co:
@@ -74,6 +99,7 @@ class drawHalfFace():
         Image.fromarray(self.pic).save("img/output.png", format="png")
 
     def saveCheckPoint(self):
+        if not exists(self.npyPath):mkdir(self.npyPath)
         with open(f"{self.npyPath}self.co.list", "w") as f:
             f.write(json.dumps(self.co))
         np.save(f"{self.npyPath}self.pic.npy", self.pic)
@@ -144,7 +170,7 @@ if __name__ == '__main__':
         else:
             c.randomColorFill()
         c.saveCheckPoint()
-        photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
+        photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((c.pictureResizeWidth, c.pictureResizeHeight)))
         label_img.configure(image=photo)
         label_img.update()
 
@@ -157,14 +183,14 @@ if __name__ == '__main__':
     def updatePciture():
         global photo
         while True:
-            photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
+            photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((c.pictureResizeWidth, c.pictureResizeHeight)))
 
 
     # ------------------- tkinter GUI config start -------------------
     # msg.showinfo("Info", "Author: StevenLi李树雨\nCopyrights all rights reserve.")
     root = tk.Tk()
     root.title("Demo: pictureFullFill\t\tAuthor: StevenLi李树雨 - all rights reserve.")
-    photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((800, 600)))
+    photo = ImageTk.PhotoImage(Image.fromarray(c.pic).resize((c.pictureResizeWidth, c.pictureResizeHeight)))
     colorSelector = tk.Frame(root)
     colorSelector.grid(row=0, column=0, sticky=tk.NSEW)
     colorBoard = []
@@ -184,14 +210,18 @@ if __name__ == '__main__':
         for f in range(min(len(rL), len(gL), len(bL)) - 1):
             r, g, b = rL[f], gL[f], bL[f]
             sub_color = "#%02x%02x%02x" % (r, g, b)
+            if c.colorDictDefaultValue == "default":
+                sub_button_text = str(sub_color)
+            else:
+                sub_button_text = c.colorDictDefaultValue
             if platform.system() == "Darwin":
                 sub_button = MacButton(colorSelector,
-                                       text=f"{c.colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}",
+                                       text=f"{c.colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else sub_button_text}",
                                        command=lambda ccommand=sub_color: updateInputText(ccommand), bg=sub_color,
                                        fg="black", highlightbackground=sub_color, width=50)
             else:
                 sub_button = tk.Button(colorSelector,
-                                       text=f"{c.colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else sub_color}",
+                                       text=f"{c.colorDictionary[str((r, g, b))] if str((r, g, b)) in colorDictionaryKeys else sub_button_text}",
                                        command=lambda ccommand=sub_color: updateInputText(ccommand), bg=sub_color,
                                        fg="black", highlightbackground=sub_color, width=5)
             sub_button.grid(row=i, column=9 - f)
